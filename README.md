@@ -6,6 +6,7 @@ This repository uses following resources.
 
 - [aws_elasticsearch_domain](https://www.terraform.io/docs/providers/aws/r/elasticsearch_domain.html)
 - [aws_cognito_user_pool](https://www.terraform.io/docs/providers/aws/r/cognito_user_pool.html)
+- [aws_cognito_user_pool_domain](https://www.terraform.io/docs/providers/aws/r/cognito_user_pool_domain.html)
 - [aws_cognito_identity_pool](https://www.terraform.io/docs/providers/aws/r/cognito_identity_pool.html)
 - [aws_iam_role](https://www.terraform.io/docs/providers/aws/r/iam_role.html)
 
