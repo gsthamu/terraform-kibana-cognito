@@ -63,14 +63,6 @@ resource "aws_iam_role_policy" "kibana_identity_authenticated" {
 EOF
 }
 
-resource "aws_cognito_identity_pool_roles_attachment" "main" {
-  identity_pool_id = aws_cognito_identity_pool.kibana_identity_pool.id
-
-  roles = {
-    "authenticated" = aws_iam_role.kibana_cognito_authenticated.arn
-  }
-}
-
 
 resource "aws_iam_role" "kibana_cognito_unauthenticated" {
   name = "kibana_cognito_unauthenticated"
@@ -81,9 +73,39 @@ resource "aws_iam_role" "kibana_cognito_unauthenticated" {
   "Statement": [
     {
       "Effect": "Allow",
+      "Principal": {
+        "Federated": "cognito-identity.amazonaws.com"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "cognito-identity.amazonaws.com:aud": "${aws_cognito_identity_pool.kibana_identity_pool.id}"
+        },
+        "ForAnyValue:StringLike": {
+          "cognito-identity.amazonaws.com:amr": "unauthenticated"
+        }
+      }
+    }
+  ]
+}
+EOF
+}
+
+
+resource "aws_iam_role_policy" "kibana_identity_unauthenticated" {
+  name = "kibana_identity_unauthenticated_policy"
+  role = aws_iam_role.kibana_cognito_unauthenticated.id
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
       "Action": [
         "mobileanalytics:PutEvents",
-        "cognito-sync:*"
+        "cognito-sync:*",
+        "cognito-identity:*"
       ],
       "Resource": [
         "*"
@@ -92,4 +114,13 @@ resource "aws_iam_role" "kibana_cognito_unauthenticated" {
   ]
 }
 EOF
+}
+
+resource "aws_cognito_identity_pool_roles_attachment" "main" {
+  identity_pool_id = aws_cognito_identity_pool.kibana_identity_pool.id
+
+  roles = {
+    "authenticated" = aws_iam_role.kibana_cognito_unauthenticated.arn
+    "unauthenticated" = aws_iam_role.kibana_cognito_unauthenticated.arn
+  }
 }
