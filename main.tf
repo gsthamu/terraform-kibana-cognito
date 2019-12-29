@@ -70,3 +70,26 @@ resource "aws_cognito_identity_pool_roles_attachment" "main" {
     "authenticated" = aws_iam_role.kibana_cognito_authenticated.arn
   }
 }
+
+
+resource "aws_iam_role" "kibana_cognito_unauthenticated" {
+  name = "kibana_cognito_unauthenticated"
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "mobileanalytics:PutEvents",
+        "cognito-sync:*"
+      ],
+      "Resource": [
+        "*"
+      ]
+    }
+  ]
+}
+EOF
+}
