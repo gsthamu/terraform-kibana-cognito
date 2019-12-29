@@ -8,7 +8,9 @@ This repository uses following resources.
 - [aws_cognito_user_pool](https://www.terraform.io/docs/providers/aws/r/cognito_user_pool.html)
 - [aws_cognito_user_pool_domain](https://www.terraform.io/docs/providers/aws/r/cognito_user_pool_domain.html)
 - [aws_cognito_identity_pool](https://www.terraform.io/docs/providers/aws/r/cognito_identity_pool.html)
+- [aws_cognito_identity_pool_roles_attachment](https://www.terraform.io/docs/providers/aws/r/cognito_identity_pool_roles_attachment.html)
 - [aws_iam_role](https://www.terraform.io/docs/providers/aws/r/iam_role.html)
+- [aws_iam_role_policy](https://www.terraform.io/docs/providers/aws/r/iam_role_policy.html)
 
 # Quick Start
 
