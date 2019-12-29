@@ -3,7 +3,7 @@ resource "aws_cognito_user_pool" "kibana_user_pool" {
 }
 
 resource "aws_cognito_user_pool_domain" "kibana-domain" {
-  domain       = "kibana-cognito-example"
+  domain       = "kibana-domain-sample"
   user_pool_id = aws_cognito_user_pool.kibana_user_pool.id
 }
 
@@ -13,7 +13,7 @@ resource "aws_cognito_identity_pool" "kibana_identity_pool" {
 }
 
 resource "aws_iam_role" "kibana_cognito_authenticated" {
-  name = "kibana_cognito_authenticated"
+  name = "KibanaCognitoAuthenticated"
 
   assume_role_policy = <<EOF
 {
@@ -65,7 +65,7 @@ EOF
 
 
 resource "aws_iam_role" "kibana_cognito_unauthenticated" {
-  name = "kibana_cognito_unauthenticated"
+  name = "KibanaCognitoUnauthenticated"
 
   assume_role_policy = <<EOF
 {
@@ -104,8 +104,7 @@ resource "aws_iam_role_policy" "kibana_identity_unauthenticated" {
       "Effect": "Allow",
       "Action": [
         "mobileanalytics:PutEvents",
-        "cognito-sync:*",
-        "cognito-identity:*"
+        "cognito-sync:*"
       ],
       "Resource": [
         "*"
