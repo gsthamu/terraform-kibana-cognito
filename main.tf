@@ -115,11 +115,28 @@ resource "aws_iam_role_policy" "kibana_identity_unauthenticated" {
 EOF
 }
 
-resource "aws_cognito_identity_pool_roles_attachment" "main" {
+resource "aws_cognito_identity_pool_roles_attachment" "cognito_roles_attachment" {
   identity_pool_id = aws_cognito_identity_pool.kibana_identity_pool.id
 
   roles = {
     "authenticated"   = aws_iam_role.kibana_cognito_authenticated.arn
     "unauthenticated" = aws_iam_role.kibana_cognito_unauthenticated.arn
+  }
+}
+
+resource "aws_elasticsearch_domain" "elasticsearch_sample" {
+  domain_name           = "cognito-test"
+  elasticsearch_version = "7.1"
+
+  cluster_config {
+    instance_type = "t2.small.elasticsearch"
+  }
+
+  snapshot_options {
+    automated_snapshot_start_hour = 23
+  }
+
+  tags = {
+    Domain = "TestDomain"
   }
 }
