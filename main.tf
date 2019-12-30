@@ -141,9 +141,9 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
   }
 
   cognito_options {
-    enabled = true
-    user_pool_id  = aws_cognito_user_pool.kibana_user_pool.id
-    identity_pool_id  = aws_cognito_identity_pool.kibana_identity_pool.id
-    role_arn = "arn:aws:iam::980831117329:role/service-role/CognitoAccessForAmazonES"
+    enabled          = true
+    user_pool_id     = aws_cognito_user_pool.kibana_user_pool.id
+    identity_pool_id = aws_cognito_identity_pool.kibana_identity_pool.id
+    role_arn         = "arn:aws:iam::980831117329:role/service-role/CognitoAccessForAmazonES"
   }
 }
