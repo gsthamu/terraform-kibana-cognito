@@ -127,6 +127,9 @@ resource "aws_cognito_identity_pool_roles_attachment" "cognito_roles_attachment"
 
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
+# data "aws_subnet_ids" "selected" {
+#   vpc_id = var.vpc_id
+# }
 resource "aws_elasticsearch_domain" "elasticsearch_sample" {
   domain_name           = var.es_domain
   elasticsearch_version = "7.1"
@@ -148,6 +151,11 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
     volume_size = 20
   }
 
+  vpc_options {
+    subnet_ids = [var.subnet_id]
+    security_group_ids = [var.security_group_id]
+  }
+
   cognito_options {
     enabled          = true
     user_pool_id     = aws_cognito_user_pool.kibana_user_pool.id
@@ -163,10 +171,7 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
       "Action": "es:*",
       "Principal": "*",
       "Effect": "Allow",
-      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*",
-      "Condition": {
-        "IpAddress": {"aws:SourceIp": ["${var.source_ip}"]}
-      }
+      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"
     }
   ]
 }
