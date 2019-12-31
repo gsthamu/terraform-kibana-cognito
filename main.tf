@@ -2,7 +2,6 @@ resource "aws_cognito_user_pool" "kibana_user_pool" {
   name = "kibana_user_pool"
 }
 
-variable "user_pool_domain" {}
 resource "aws_cognito_user_pool_domain" "kibana-domain" {
   domain       = var.user_pool_domain
   user_pool_id = aws_cognito_user_pool.kibana_user_pool.id
@@ -126,12 +125,10 @@ resource "aws_cognito_identity_pool_roles_attachment" "cognito_roles_attachment"
 }
 
 
-variable "cognito_role_arn" {}
-variable "kibana_domain" {}
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 resource "aws_elasticsearch_domain" "elasticsearch_sample" {
-  domain_name           = "cognito-test"
+  domain_name           = var.es_domain
   elasticsearch_version = "7.1"
 
   cluster_config {
@@ -161,9 +158,9 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
       "Action": "es:*",
       "Principal": "*",
       "Effect": "Allow",
-      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.kibana_domain}/*",
+      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*",
       "Condition": {
-        "IpAddress": {"aws:SourceIp": ["66.193.100.22/32"]}
+        "IpAddress": {"aws:SourceIp": ["${var.source_ip}"]}
       }
     }
   ]
