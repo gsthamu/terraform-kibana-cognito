@@ -2,9 +2,9 @@ resource "aws_cognito_user_pool" "kibana_user_pool" {
   name = "kibana_user_pool"
 }
 
-variable "kibana_domain" {}
+variable "user_pool_domain" {}
 resource "aws_cognito_user_pool_domain" "kibana-domain" {
-  domain       = var.kibana_domain
+  domain       = var.user_pool_domain
   user_pool_id = aws_cognito_user_pool.kibana_user_pool.id
 }
 
@@ -127,6 +127,9 @@ resource "aws_cognito_identity_pool_roles_attachment" "cognito_roles_attachment"
 
 
 variable "cognito_role_arn" {}
+variable "kibana_domain" {}
+data "aws_region" "current" {}
+data "aws_caller_identity" "current" {}
 resource "aws_elasticsearch_domain" "elasticsearch_sample" {
   domain_name           = "cognito-test"
   elasticsearch_version = "7.1"
@@ -149,4 +152,21 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
     identity_pool_id = aws_cognito_identity_pool.kibana_identity_pool.id
     role_arn         = var.cognito_role_arn
   }
+
+  access_policies = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "es:*",
+      "Principal": "*",
+      "Effect": "Allow",
+      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.kibana_domain}/*",
+      "Condition": {
+        "IpAddress": {"aws:SourceIp": ["66.193.100.22/32"]}
+      }
+    }
+  ]
+}
+POLICY
 }
