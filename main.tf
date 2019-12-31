@@ -2,8 +2,9 @@ resource "aws_cognito_user_pool" "kibana_user_pool" {
   name = "kibana_user_pool"
 }
 
+variable "kibana_domain" {}
 resource "aws_cognito_user_pool_domain" "kibana-domain" {
-  domain       = "kibana-domain-sample"
+  domain       = var.kibana_domain
   user_pool_id = aws_cognito_user_pool.kibana_user_pool.id
 }
 
@@ -124,6 +125,8 @@ resource "aws_cognito_identity_pool_roles_attachment" "cognito_roles_attachment"
   }
 }
 
+
+variable "cognito_role_arn" {}
 resource "aws_elasticsearch_domain" "elasticsearch_sample" {
   domain_name           = "cognito-test"
   elasticsearch_version = "7.1"
@@ -144,6 +147,6 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
     enabled          = true
     user_pool_id     = aws_cognito_user_pool.kibana_user_pool.id
     identity_pool_id = aws_cognito_identity_pool.kibana_identity_pool.id
-    role_arn         = "arn:aws:iam::980831117329:role/service-role/CognitoAccessForAmazonES"
+    role_arn         = var.cognito_role_arn
   }
 }
