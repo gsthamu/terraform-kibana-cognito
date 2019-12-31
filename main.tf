@@ -143,6 +143,11 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
     Domain = "TestDomain"
   }
 
+  ebs_options {
+    ebs_enabled = true
+    volume_size = 20
+  }
+
   cognito_options {
     enabled          = true
     user_pool_id     = aws_cognito_user_pool.kibana_user_pool.id
