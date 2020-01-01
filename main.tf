@@ -1,3 +1,4 @@
+# Cognito
 resource "aws_cognito_user_pool" "kibana_user_pool" {
   name = "kibana_user_pool"
 }
@@ -63,7 +64,6 @@ resource "aws_iam_role_policy" "kibana_identity_authenticated" {
 EOF
 }
 
-
 resource "aws_iam_role" "kibana_cognito_unauthenticated" {
   name = "KibanaCognitoUnauthenticated"
 
@@ -90,7 +90,6 @@ resource "aws_iam_role" "kibana_cognito_unauthenticated" {
 }
 EOF
 }
-
 
 resource "aws_iam_role_policy" "kibana_identity_unauthenticated" {
   name = "kibana_identity_unauthenticated_policy"
@@ -124,12 +123,33 @@ resource "aws_cognito_identity_pool_roles_attachment" "cognito_roles_attachment"
   }
 }
 
+# Elasticsearch
+resource "aws_iam_role" "es_cognito_access_role" {
+  name               = "EsCognitoAccessRole"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "es.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy_attachment" "es_cognito_access_attach" {
+  name       = "es_cognito_access_attach"
+  roles      = [aws_iam_role.es_cognito_access_role.name]
+  policy_arn = "arn:aws:iam::aws:policy/AmazonESCognitoAccess"
+}
 
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
-# data "aws_subnet_ids" "selected" {
-#   vpc_id = var.vpc_id
-# }
 resource "aws_elasticsearch_domain" "elasticsearch_sample" {
   domain_name           = var.es_domain
   elasticsearch_version = "7.1"
@@ -152,7 +172,7 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
   }
 
   vpc_options {
-    subnet_ids = [var.subnet_id]
+    subnet_ids         = [var.subnet_id]
     security_group_ids = [var.security_group_id]
   }
 
@@ -160,7 +180,7 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
     enabled          = true
     user_pool_id     = aws_cognito_user_pool.kibana_user_pool.id
     identity_pool_id = aws_cognito_identity_pool.kibana_identity_pool.id
-    role_arn         = var.cognito_role_arn
+    role_arn         = aws_iam_role.es_cognito_access_role.arn
   }
 
   access_policies = <<POLICY
@@ -176,4 +196,6 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
   ]
 }
 POLICY
+
+  depends_on = [aws_iam_policy_attachment.es_cognito_access_attach]
 }
