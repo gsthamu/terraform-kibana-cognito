@@ -118,22 +118,20 @@ resource "aws_cognito_identity_pool_roles_attachment" "cognito_roles_attachment"
 }
 
 # Elasticsearch
+data "aws_iam_policy_document" "es_cognito_assume_role_policy" {
+  statement {
+    principals {
+      type = "Service"
+      identifiers = ["es.amazonaws.com"]
+    }
+
+    actions = ["sts:AssumeRole"]
+  }
+}
+
 resource "aws_iam_role" "es_cognito_access_role" {
   name               = "EsCognitoAccessRole"
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Service": "es.amazonaws.com"
-      },
-      "Action": "sts:AssumeRole"
-    }
-  ]
-}
-EOF
+  assume_role_policy = data.aws_iam_policy_document.es_cognito_assume_role_policy.json
 }
 
 resource "aws_iam_policy_attachment" "es_cognito_access_attach" {
@@ -144,6 +142,14 @@ resource "aws_iam_policy_attachment" "es_cognito_access_attach" {
 
 data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
+data "aws_iam_policy_document" "es_access_policy" {
+  statement {
+    actions = ["es:*"]
+
+    resources = ["arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"]
+  }
+}
+
 resource "aws_elasticsearch_domain" "elasticsearch_sample" {
   domain_name           = var.es_domain
   elasticsearch_version = "7.1"
@@ -177,19 +183,7 @@ resource "aws_elasticsearch_domain" "elasticsearch_sample" {
     role_arn         = aws_iam_role.es_cognito_access_role.arn
   }
 
-  access_policies = <<POLICY
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "es:*",
-      "Principal": "*",
-      "Effect": "Allow",
-      "Resource": "arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"
-    }
-  ]
-}
-POLICY
+  access_policies = data.aws_iam_policy_document.es_access_policy.json
 
   depends_on = [aws_iam_policy_attachment.es_cognito_access_attach]
 }
