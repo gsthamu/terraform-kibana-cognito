@@ -13,105 +13,99 @@ resource "aws_cognito_identity_pool" "kibana_identity_pool" {
   allow_unauthenticated_identities = true
 }
 
+data "aws_iam_policy_document" "cognito_authenticated_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type = "Federated"
+      identifiers = ["cognito-identity.amazonaws.com"]
+    }
+
+    condition {
+      test = "StringEquals"
+      variable = "cognito-identity.amazonaws.com:aud"
+      values = ["${aws_cognito_identity_pool.kibana_identity_pool.id}"]
+    }
+
+    condition {
+      test = "ForAnyValue:StringLike"
+      variable = "cognito-identity.amazonaws.com:amr"
+      values = ["authenticated"]
+    }
+  }
+}
+
 resource "aws_iam_role" "kibana_cognito_authenticated" {
   name = "KibanaCognitoAuthenticated"
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "cognito-identity.amazonaws.com"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "cognito-identity.amazonaws.com:aud": "${aws_cognito_identity_pool.kibana_identity_pool.id}"
-        },
-        "ForAnyValue:StringLike": {
-          "cognito-identity.amazonaws.com:amr": "authenticated"
-        }
-      }
-    }
-  ]
+  assume_role_policy = data.aws_iam_policy_document.cognito_authenticated_assume_role_policy.json
 }
-EOF
+
+data "aws_iam_policy_document" "identity_authenticated_assume_role_policy" {
+  statement {
+    actions = [
+      "mobileanalytics:PutEvents",
+      "cognito-sync:*",
+      "cognito-identity:*"
+    ]
+
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "kibana_identity_authenticated" {
   name = "kibana_identity_authenticated_policy"
   role = aws_iam_role.kibana_cognito_authenticated.id
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "mobileanalytics:PutEvents",
-        "cognito-sync:*",
-        "cognito-identity:*"
-      ],
-      "Resource": [
-        "*"
-      ]
-    }
-  ]
+  policy = data.aws_iam_policy_document.identity_authenticated_assume_role_policy.json
 }
-EOF
+
+data "aws_iam_policy_document" "cognito_unauthenticated_assume_role_policy" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+
+    principals {
+      type = "Federated"
+      identifiers = ["cognito-identity.amazonaws.com"]
+    }
+
+    condition {
+      test = "StringEquals"
+      variable = "cognito-identity.amazonaws.com:aud"
+      values = ["${aws_cognito_identity_pool.kibana_identity_pool.id}"]
+    }
+
+    condition {
+      test = "ForAnyValue:StringLike"
+      variable = "cognito-identity.amazonaws.com:amr"
+      values = ["unauthenticated"]
+    }
+  }
 }
 
 resource "aws_iam_role" "kibana_cognito_unauthenticated" {
   name = "KibanaCognitoUnauthenticated"
 
-  assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Principal": {
-        "Federated": "cognito-identity.amazonaws.com"
-      },
-      "Action": "sts:AssumeRoleWithWebIdentity",
-      "Condition": {
-        "StringEquals": {
-          "cognito-identity.amazonaws.com:aud": "${aws_cognito_identity_pool.kibana_identity_pool.id}"
-        },
-        "ForAnyValue:StringLike": {
-          "cognito-identity.amazonaws.com:amr": "unauthenticated"
-        }
-      }
-    }
-  ]
+  assume_role_policy = data.aws_iam_policy_document.cognito_unauthenticated_assume_role_policy.json
 }
-EOF
+
+data "aws_iam_policy_document" "identity_unauthenticated_assume_role_policy" {
+  statement {
+    actions = [
+      "mobileanalytics:PutEvents",
+      "cognito-sync:*",
+    ]
+
+    resources = ["*"]
+  }
 }
 
 resource "aws_iam_role_policy" "kibana_identity_unauthenticated" {
   name = "kibana_identity_unauthenticated_policy"
   role = aws_iam_role.kibana_cognito_unauthenticated.id
 
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "mobileanalytics:PutEvents",
-        "cognito-sync:*"
-      ],
-      "Resource": [
-        "*"
-      ]
-    }
-  ]
-}
-EOF
+  policy = data.aws_iam_policy_document.identity_unauthenticated_assume_role_policy.json
 }
 
 resource "aws_cognito_identity_pool_roles_attachment" "cognito_roles_attachment" {
