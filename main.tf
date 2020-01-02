@@ -1,4 +1,5 @@
 # Cognito
+# TODO: Create group which is allowed to use "es:ESHttp*".
 resource "aws_cognito_user_pool" "kibana_user_pool" {
   name = "kibana_user_pool"
 }
