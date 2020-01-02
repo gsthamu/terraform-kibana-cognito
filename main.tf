@@ -144,6 +144,11 @@ data "aws_region" "current" {}
 data "aws_caller_identity" "current" {}
 data "aws_iam_policy_document" "es_access_policy" {
   statement {
+    principals {
+      type = "AWS"
+      identifiers = ["arn:aws:sts::${data.aws_caller_identity.current.account_id}:assumed-role/${aws_iam_role.es_cognito_access_role.name}/CognitoIdentityCredentials"]
+    }
+
     actions = ["es:*"]
 
     resources = ["arn:aws:es:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:domain/${var.es_domain}/*"]
